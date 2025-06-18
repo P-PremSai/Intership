@@ -31,11 +31,12 @@ jobs:
       - name: Check previous job results
         run: |
           echo "Primary check result: ${{ needs.primary-check.result }}"
+          echo "Fallback check result: ${{ needs.fallback-check.result }}"
           # If fallback succeeded (env var was set), succeed.
           if [[ "${{ needs.primary-check.result }}" == "success" ]]; then
             echo "✅ Primary succeeded"
             exit 0
-          elif [[ "${{ env.fallback_status }}" == "success" ]]; then
+          elif [[ "${{ needs.fallback-check.result }}" == "success" ]]; then
             echo "✅ Fallback succeeded"
             exit 0
           else
