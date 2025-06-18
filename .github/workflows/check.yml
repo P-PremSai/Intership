@@ -1,0 +1,40 @@
+name: Pull Request Check
+
+on:
+  pull_request:
+
+jobs:
+  primary-check:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Simulate failure
+        run: |
+          echo "Primary check failed"
+          exit 1
+
+  fallback-check:
+    runs-on: ubuntu-latest
+    needs: primary-check
+    if: needs.primary-check.result == 'failure'
+    steps:
+      - name: Simulate fallback success
+        run: |
+          echo "Fallback succeeded"
+          exit 0
+
+  final-status:
+    runs-on: ubuntu-latest
+    needs: [primary-check, fallback-check]
+    steps:
+      - name: Decide final outcome
+        run: |
+          if [ "${{ needs.primary-check.result }}" == "success" ]; then
+            echo "Primary succeeded"
+            exit 0
+          elif [ "${{ needs.fallback-check.result }}" == "success" ]; then
+            echo "Fallback succeeded"
+            exit 0
+          else
+            echo "All checks failed"
+            exit 1
