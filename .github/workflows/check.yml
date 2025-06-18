@@ -1,0 +1,45 @@
+name: Pull Request Check
+
+on:
+  pull_request:
+
+jobs:
+  primary-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Simulate failure
+        run: |
+          echo "Primary check failed"
+          exit 1
+
+  fallback-check:
+    runs-on: ubuntu-latest
+    if: ${{ needs.primary-check.result == 'failure' && always() }}
+    needs: [primary-check]
+    steps:
+      - name: Simulate fallback success
+        run: |
+          echo "Fallback succeeded"
+          echo "fallback_status=success" >> $GITHUB_ENV
+          exit 0
+
+  final-status:
+    runs-on: ubuntu-latest
+    needs: [primary-check, fallback-check]
+    if: always()
+    steps:
+      - name: Check previous job results
+        run: |
+          echo "Primary check result: ${{ needs.primary-check.result }}"
+          echo "Fallback check result: ${{ needs.fallback-check.result }}"
+          # If fallback succeeded (env var was set), succeed.
+          if [[ "${{ needs.primary-check.result }}" == "success" ]]; then
+            echo "✅ Primary succeeded"
+            exit 0
+          elif [[ "${{ needs.fallback-check.result }}" == "success" ]]; then
+            echo "✅ Fallback succeeded"
+            exit 0
+          else
+            echo "❌ All checks failed"
+            exit 1
+          fi
