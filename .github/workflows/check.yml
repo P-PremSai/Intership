@@ -14,7 +14,8 @@ jobs:
 
   fallback-check:
     runs-on: ubuntu-latest
-    if: ${{ needs.primary-check.result }} == "failure"
+    if: ${{ needs.primary-check.result }} == "failure" && always()
+    
     needs: [primary-check]
     steps:
       - name: Simulate fallback success
