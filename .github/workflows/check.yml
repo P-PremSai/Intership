@@ -6,7 +6,6 @@ on:
 jobs:
   primary-check:
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - name: Simulate failure
         run: |
@@ -15,26 +14,29 @@ jobs:
 
   fallback-check:
     runs-on: ubuntu-latest
-    needs: primary-check
-    if: needs.primary-check.result == 'failure'
+    if: failure()  # Always runs if any job before failed
     steps:
       - name: Simulate fallback success
         run: |
           echo "Fallback succeeded"
+          echo "fallback_status=success" >> $GITHUB_ENV
           exit 0
 
   final-status:
     runs-on: ubuntu-latest
-    needs: [primary-check, fallback-check]
+    needs: [primary-check]
+    if: always()
     steps:
-      - name: Decide final outcome
+      - name: Check previous job results
         run: |
-          if [ "${{ needs.primary-check.result }}" == "success" ]; then
-            echo "Primary succeeded"
+          echo "Primary check result: ${{ needs.primary-check.result }}"
+          # If fallback succeeded (env var was set), succeed.
+          if [[ "${{ needs.primary-check.result }}" == "success" ]]; then
+            echo "✅ Primary succeeded"
             exit 0
-          elif [ "${{ needs.fallback-check.result }}" == "success" ]; then
-            echo "Fallback succeeded"
+          elif [[ "${{ env.fallback_status }}" == "success" ]]; then
+            echo "✅ Fallback succeeded"
             exit 0
           else
-            echo "All checks failed"
+            echo "❌ All checks failed"
             exit 1
