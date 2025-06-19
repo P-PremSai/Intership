@@ -1,0 +1,20 @@
+name: continue on error check
+
+on:
+  pull_request:
+
+jobs:
+  always-successful:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Step 1 (fails)
+        continue-on-error: true
+        run: exit 1
+
+      - name: Step 2 (fails)
+        continue-on-error: true
+        run: exit 2
+
+      - name: Step 3 (succeeds)
+        continue-on-error: true
+        run: echo "This step works"
