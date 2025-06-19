@@ -30,6 +30,7 @@ jobs:
         continue-on-error: true
 
       - name: Summary - check which steps failed
+        if:  steps.step2.outcome != 'failure' && steps.step3.outcome != 'failure'
         run: |
           echo "Step 1 outcome: ${{ steps.step1.outcome }}"
           echo "Step 2 outcome: ${{ steps.step2.outcome }}"
