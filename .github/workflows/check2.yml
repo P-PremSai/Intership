@@ -1,20 +1,44 @@
-name: continue on error check
+name: Continue-On-Error Workflow
 
 on:
   pull_request:
 
 jobs:
-  always-successful:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Step 1 (fails)
-        continue-on-error: true
-        run: exit 1
+  test-continue-on-error:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Step 1 - always succeeds
+        id: step1
+        run: echo "Step 1 ran successfully"
+        continue-on-error: true
 
-      - name: Step 2 (fails)
-        continue-on-error: true
-        run: exit 2
+      - name: Step 2 - simulate failure
+        id: step2
+        run: exit 1
+        continue-on-error: true
 
-      - name: Step 3 (succeeds)
-        continue-on-error: true
-        run: echo "This step works"
+      - name: Step 3 - simulate another failure
+        id: step3
+        run: |
+          echo "Doing something..."
+          false  # fails
+        continue-on-error: true
+
+      - name: Step 4 - runs after others
+        id: step4
+        run: echo "Step 4 ran regardless of earlier failures"
+        continue-on-error: true
+
+      - name: Summary - check which steps failed
+        run: |
+          echo "Step 1 outcome: ${{ steps.step1.outcome }}"
+          echo "Step 2 outcome: ${{ steps.step2.outcome }}"
+          echo "Step 3 outcome: ${{ steps.step3.outcome }}"
+          echo "Step 4 outcome: ${{ steps.step4.outcome }}"
+
+          if [[ "${{ steps.step2.outcome }}" == "failure" || "${{ steps.step3.outcome }}" == "failure" ]]; then
+            echo "One or more steps failed, but the job continues."
+          else
+            echo "All steps succeeded."
+          fi
+        continue-on-error: true
